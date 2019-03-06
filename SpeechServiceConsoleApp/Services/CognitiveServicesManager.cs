@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using Microsoft.CognitiveServices.Speech;
+using Microsoft.CognitiveServices.Speech.Audio;
 using Microsoft.CognitiveServices.Speech.Intent;
 
 using SpeechServiceConsoleApp.Models;
@@ -31,10 +32,11 @@ namespace SpeechServiceConsoleApp.Services
 
         public async Task RecognizeSpeech()
         {
-            var config = SpeechConfig.FromSubscription(key, "westus2");
+            var audioConfig = AudioConfig.FromDefaultMicrophoneInput();
+            var speechConfig = SpeechConfig.FromSubscription(key, "westus2");
 
             // Creates a speech recognizer.
-            using (var recognizer = new IntentRecognizer(config))
+            using (var recognizer = new IntentRecognizer(speechConfig, audioConfig))
             {
                 // Hide user secrets later
                 var model = LanguageUnderstandingModel.FromAppId(Environment.GetEnvironmentVariable("LUIS_APP_ID"));
