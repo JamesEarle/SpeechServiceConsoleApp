@@ -47,7 +47,7 @@ namespace SpeechServiceConsoleApp.Services
                 recognizer.Recognizing += (s, e) => 
                 {
                     // Use this to send partial responses
-                    // Console.WriteLine($"Partial: {e.Result.Text}");
+                    Console.WriteLine($"Partial: {e.Result.Text}");
                 };
 
                 recognizer.Recognized += (s, e) =>
@@ -194,8 +194,7 @@ namespace SpeechServiceConsoleApp.Services
             Console.WriteLine("Current Order: ");
             foreach(var o in order.OrderItems)
             {
-                Console.WriteLine($"\t{o.Size}");
-                Console.WriteLine($"\t{o.Name}");
+                Console.WriteLine($"\t - {o.Size} {o.Name}");
             }
         }
     }
