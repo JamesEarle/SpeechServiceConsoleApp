@@ -21,12 +21,11 @@ namespace SpeechServiceConsoleApp.Services
         public CognitiveServicesManager(string key)
         {
             this.key = key;
-
             recognizedSpeech = String.Empty;
         }
 
         public void Run()
-        {   // Refactor here if StartContinuous is very different from RecognizeOnce
+        {   
             RecognizeSpeech().Wait();
         }
 
@@ -77,6 +76,9 @@ namespace SpeechServiceConsoleApp.Services
                     stopRecognition.TrySetResult(0);
                 };
 
+                // Instantiate new Order object
+                // order = new Order();
+
                 Console.WriteLine("Say something to get started, or \"Exit\" to quit.");
                 await recognizer.StartContinuousRecognitionAsync().ConfigureAwait(false);
 
@@ -93,12 +95,27 @@ namespace SpeechServiceConsoleApp.Services
                 Console.WriteLine($"Recognized Text: {e.Result.Text}");
                 Console.WriteLine($"Detected Intent: {e.Result.IntentId}");
                 // How to make this show all intent probabilities not just one?
-                Console.WriteLine(e.Result.Properties.GetProperty(PropertyId.LanguageUnderstandingServiceResponse_JsonResult));
+                
+                // Console.WriteLine(e.Result.Properties.GetProperty(PropertyId.LanguageUnderstandingServiceResponse_JsonResult));
                 
                 var rawJason = e.Result.Properties.GetProperty(PropertyId.LanguageUnderstandingServiceResponse_JsonResult);
                 LuisWrapper luis = JsonConvert.DeserializeObject<LuisWrapper>(rawJason);
 
-                Console.WriteLine(luis.TopScoringIntent);
+                Console.WriteLine(luis.TopScoringIntent.Intent);
+
+                if(luis.TopScoringIntent.Intent.Equals("AddToOrder"))
+                {
+
+                    // Order.AddToOrder(new MenuItem())
+                }
+                else if (luis.TopScoringIntent.Intent.Equals("RemoveFromOrder"))
+                {
+                    Console.WriteLine("Removing from order object");
+                }
+                else
+                {
+                    Console.WriteLine("Doing nothing");
+                }
 
                 if (luis.Query.ToUpper().Contains("EXIT") || luis.Query.ToUpper().Contains("WINDOW"))
                 {
