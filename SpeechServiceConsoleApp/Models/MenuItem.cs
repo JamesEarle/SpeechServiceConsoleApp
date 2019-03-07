@@ -9,13 +9,15 @@ namespace SpeechServiceConsoleApp.Models
         private string _sku;
         private string _id;
         public string Name { get; set; }
+        public string Size { get; set; }
         public string Description { get; set; }
         public float Price { get; set; }
         public List<string> Ingredients { get; set; }
+        public List<string> Modifiers { get; set; }
 
-        public MenuItem(string Name) {
-            this.Name = Name;
-            // Pull additional information from item catalog lookup
+        public MenuItem() {
+            this.Ingredients = new List<string>();
+            this.Modifiers = new List<string>();
         }
     }
 }

@@ -16,7 +16,7 @@ namespace SpeechServiceConsoleApp.Services
     {
         private string key;
         private string recognizedSpeech;
-        public Order order;
+        public Order _order;
 
         public CognitiveServicesManager(string key)
         {
@@ -47,7 +47,7 @@ namespace SpeechServiceConsoleApp.Services
                 recognizer.Recognizing += (s, e) => 
                 {
                     // Use this to send partial responses
-                    Console.WriteLine($"Partial: {e.Result.Text}");
+                    // Console.WriteLine($"Partial: {e.Result.Text}");
                 };
 
                 recognizer.Recognized += (s, e) =>
@@ -77,7 +77,7 @@ namespace SpeechServiceConsoleApp.Services
                 };
 
                 // Instantiate new Order object
-                // order = new Order();
+                _order = new Order();
 
                 Console.WriteLine("Say something to get started, or \"Exit\" to quit.");
                 await recognizer.StartContinuousRecognitionAsync().ConfigureAwait(false);
@@ -90,38 +90,17 @@ namespace SpeechServiceConsoleApp.Services
 
         private Boolean ProcessRecognizedText(object s, IntentRecognitionEventArgs e)
         {
+            Boolean exit = false;
             if (e.Result.Reason == ResultReason.RecognizedIntent)
             {
-                Console.WriteLine($"Recognized Text: {e.Result.Text}");
-                Console.WriteLine($"Detected Intent: {e.Result.IntentId}");
-                // How to make this show all intent probabilities not just one?
-                
-                // Console.WriteLine(e.Result.Properties.GetProperty(PropertyId.LanguageUnderstandingServiceResponse_JsonResult));
+                // Console.WriteLine($"Recognized Text: {e.Result.Text}");
+                // Console.WriteLine($"Detected Intent: {e.Result.IntentId}");
                 
                 var rawJason = e.Result.Properties.GetProperty(PropertyId.LanguageUnderstandingServiceResponse_JsonResult);
-                LuisWrapper luis = JsonConvert.DeserializeObject<LuisWrapper>(rawJason);
+                LuisWrapper luisResponse = JsonConvert.DeserializeObject<LuisWrapper>(rawJason);
 
-                Console.WriteLine(luis.TopScoringIntent.Intent);
-
-                if(luis.TopScoringIntent.Intent.Equals("AddToOrder"))
-                {
-
-                    // Order.AddToOrder(new MenuItem())
-                }
-                else if (luis.TopScoringIntent.Intent.Equals("RemoveFromOrder"))
-                {
-                    Console.WriteLine("Removing from order object");
-                }
-                else
-                {
-                    Console.WriteLine("Doing nothing");
-                }
-
-                if (luis.Query.ToUpper().Contains("EXIT") || luis.Query.ToUpper().Contains("WINDOW"))
-                {
-                    return true;
-                }
-
+                // Get intent and process entities
+                exit = ProcessResponse(luisResponse);
             }
             else if (e.Result.Reason == ResultReason.RecognizedSpeech)
             {
@@ -130,21 +109,94 @@ namespace SpeechServiceConsoleApp.Services
 
                 if (e.Result.Text.ToUpper().Contains("EXIT") || e.Result.Text.ToUpper().Contains("WINDOW"))
                 {
-                    return true;
+                    exit = true;
                 }
             }
             else
             {
                 Console.WriteLine("Speech could not be recognized.");
-                return false;
+                exit = false;
+            }
+            return exit;
+        }
+
+        public Boolean ProcessResponse(LuisWrapper luisResponse)
+        {
+            switch(luisResponse.TopScoringIntent.Intent)
+            {
+                case "AddToOrder":
+                    if(luisResponse.CompositeEntities != null) 
+                    {
+                        if(luisResponse.CompositeEntities.Length > 0) 
+                        {
+                            var items = GetCompositeItemDetails(luisResponse);
+                            _order.AddToOrder(items);
+                        }
+                    }
+                    PrintOrder(_order);                
+                    break;
+                case "RemoveFromOrder":
+                    if(luisResponse.CompositeEntities != null) 
+                    {
+                        if(luisResponse.CompositeEntities.Length > 0) 
+                        {
+                            var items = GetCompositeItemDetails(luisResponse);
+                            _order.RemoveFromOrder(items);
+                        }
+                    }
+                    PrintOrder(_order);                
+                    break;
+                case "None":
+                    Console.WriteLine("None intent.");
+                    break;
+                default:
+                    break;
+            }
+
+            if (luisResponse.Query.ToUpper().Contains("EXIT") || luisResponse.Query.ToUpper().Contains("WINDOW"))
+            {
+                return true;
             }
             return false;
         }
 
-        public async Task<string> ProcessIntent()
+        public List<MenuItem> GetCompositeItemDetails(LuisWrapper luisWrapper) 
         {
-            // TODO
-            return null;
+            List<MenuItem> items = new List<MenuItem>();
+
+            foreach(var compositeEntity in luisWrapper.CompositeEntities) 
+            {
+                var item = new MenuItem();
+                foreach(var child in compositeEntity.Children)
+                {
+                    switch(child.Type)
+                    {
+                        case "Drink.Item":
+                            item.Name = child.Value;
+                            break; 
+                        case "Drink.Size":
+                            item.Size = child.Value;
+                            break;
+                        case "Drink.Modifier":
+                            item.Modifiers.Add(child.Value);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                items.Add(item);
+            }
+            return items;
+        }
+
+        public void PrintOrder(Order order) 
+        {   
+            Console.WriteLine("Current Order: ");
+            foreach(var o in order.OrderItems)
+            {
+                Console.WriteLine($"\t{o.Size}");
+                Console.WriteLine($"\t{o.Name}");
+            }
         }
     }
 }

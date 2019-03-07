@@ -2,7 +2,6 @@
 using SpeechServiceConsoleApp.Services;
 using System.Threading.Tasks;
 using Microsoft.CognitiveServices.Speech;
-using NAudio.CoreAudioApi;
 
 namespace SpeechServiceConsoleApp
 {

@@ -9,27 +9,33 @@ namespace SpeechServiceConsoleApp.Models
         public List<MenuItem> OrderItems { get; set; }
         public Order() 
         {
-            // Empty constructor
+            OrderItems = new List<MenuItem>();
         }
 
-        public Boolean AddToOrder(MenuItem item)
+        public void AddToOrder(List<MenuItem> items)
         {
-            try {
-                OrderItems.Add(item);
-                return true;
-            } catch(Exception e) {
-                return false;
+            OrderItems.AddRange(items);
+        }
+
+        public void RemoveFromOrder(List<MenuItem> items) 
+        {
+            // Can't manipulate the list you're iterating.
+            // This code is bad and I should feel bad.
+            List<MenuItem> itemsToRemove = new List<MenuItem>();
+
+            foreach(var itemInOrder in OrderItems)
+            {
+                foreach(var itemToRemove in items) 
+                {
+                    if(itemInOrder.Name == itemToRemove.Name)
+                    {
+                        itemsToRemove.Add(itemInOrder);
+                    }
+                }
             }
-        }
-
-        public Boolean RemoveFromOrder(MenuItem item) 
-        {
-            try {
-                // Perform name equality check, if not in list return false
-                OrderItems.Remove(item);
-                return true;
-            } catch(Exception e) {
-                return false;
+            foreach(var itemToRemove in itemsToRemove) 
+            {
+                OrderItems.Remove(itemToRemove);
             }
         }
     }
