@@ -9,6 +9,7 @@ using Microsoft.CognitiveServices.Speech.Intent;
 
 using SpeechServiceConsoleApp.Models;
 using Newtonsoft.Json;
+using System.Linq;
 
 namespace SpeechServiceConsoleApp.Services
 {
@@ -122,35 +123,34 @@ namespace SpeechServiceConsoleApp.Services
 
         public Boolean ProcessResponse(LuisWrapper luisResponse)
         {
-            switch(luisResponse.TopScoringIntent.Intent)
+            if(luisResponse.TopScoringIntent.Intent.Equals("ModifyOrder")) 
             {
-                case "AddToOrder":
-                    if(luisResponse.CompositeEntities != null) 
+                // Pickup on what action is to be taken on the order
+                if(luisResponse.CompositeEntities != null && luisResponse.CompositeEntities.Length > 0) 
+                {
+                    // var items = GetCompositeItemDetails(luisResponse);
+                    // _order.AddToOrder(items);
+                    
+                    // can use composite.Children.FindAll to get every item
+                    foreach(var composite in luisResponse.CompositeEntities)
                     {
-                        if(luisResponse.CompositeEntities.Length > 0) 
-                        {
-                            var items = GetCompositeItemDetails(luisResponse);
-                            _order.AddToOrder(items);
+                        switch(composite.ParentType) {
+                            case "Action.Add":
+                                var item = composite.Children.Where(c => c.Type.Equals("Drink.Item"));
+                                Console.WriteLine(item.First().Type);
+                                Console.WriteLine(item.First().Value);
+                                break;
+                            case "Action.Remove":
+                                break;
+                            default:
+                                break;
                         }
                     }
-                    PrintOrder(_order);                
-                    break;
-                case "RemoveFromOrder":
-                    if(luisResponse.CompositeEntities != null) 
-                    {
-                        if(luisResponse.CompositeEntities.Length > 0) 
-                        {
-                            var items = GetCompositeItemDetails(luisResponse);
-                            _order.RemoveFromOrder(items);
-                        }
-                    }
-                    PrintOrder(_order);                
-                    break;
-                case "None":
-                    Console.WriteLine("None intent.");
-                    break;
-                default:
-                    break;
+                }
+            } 
+            else 
+            {
+
             }
 
             if (luisResponse.Query.ToUpper().Contains("EXIT") || luisResponse.Query.ToUpper().Contains("WINDOW"))
